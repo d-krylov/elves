@@ -12,6 +12,7 @@ set(SOURCES
   ${PROJECT_SOURCE_DIR}/sources/small_32.S
   ${PROJECT_SOURCE_DIR}/sources/small_64.S
   ${PROJECT_SOURCE_DIR}/sources/printf_32.S
+  ${PROJECT_SOURCE_DIR}/sources/printf_64.S
   ${PROJECT_SOURCE_DIR}/sources/dynamic_32.S
   ${PROJECT_SOURCE_DIR}/sources/dynamic_64.S
 )
