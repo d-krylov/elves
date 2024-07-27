@@ -1,4 +1,5 @@
 #define BASE  0x40000
+#define RTLD_LAZY 0x1
 
 .code64
 
@@ -178,18 +179,33 @@ INTERPRETER_SECTION:
      
 _start:
 
-  movq       $1,%rax          
-  movq       $1,%rdi            
-  movq       $BASE + MESSAGE_OFFSET, %rsi    
-  movq       $MESSAGE_SIZE, %rdx 
- 
-  syscall            
+  xor   %rax, %rax
+  movq  $RTLD_LAZY, %rsi
+  movq  $BASE + LIBRARY_NAME_OFFSET, %rdi           
+  movq  DLOPEN_RELOCATION(%rax), %rbx
+  call  *%rbx
+
+  movq  %rax, %rdi
+  xor   %rax, %rax
+  
+  movq  $BASE + FUNCTION_NAME_OFFSET, %rsi   
+  movq  DLSYM_RELOCATION(%rax), %rbx
+  call  *%rbx
+
+  movq  $BASE + MESSAGE_OFFSET, %rdi
+  call *%rax
 
   movq       $60, %rax   
   movq       $0,  %rdi   
   syscall
+
+  .set LIBRARY_NAME_OFFSET, . - ELF_HEADER
+  .string "libc.so.6"
+
+  .set FUNCTION_NAME_OFFSET, . - ELF_HEADER
+  .string "printf"
       
-  .set        FILE_SIZE,   . - ELF_HEADER   
-  .set        DLOPEN_RELOCATION, . - ELF_HEADER + BASE
-  .set        DLSYM_RELOCATION,  . - ELF_HEADER + BASE + 8
-  .set        MEMORY_SIZE, . - ELF_HEADER + 64
+  .set FILE_SIZE, . - ELF_HEADER   
+  .set DLOPEN_RELOCATION, . - ELF_HEADER + BASE
+  .set DLSYM_RELOCATION, . - ELF_HEADER + BASE + 8
+  .set MEMORY_SIZE, . - ELF_HEADER + 512
