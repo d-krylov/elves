@@ -1,5 +1,4 @@
 #define BASE  0x40000
-#define RTLD_LAZY 0x1
 
 .code64
 
@@ -88,7 +87,7 @@ INTERPRETER_HEADER:
 
 DYNAMIC_TABLE:
 
-  .quad  1,  LIBDL_NAME                       //d_tag = DT_NEEDED
+  .quad  1,  LIBC_NAME                        //d_tag = DT_NEEDED
   .quad  4,  HASH_TABLE_OFFSET                //d_tag = DT_HASH
   .quad  5,  STRING_TABLE_OFFSET              //d_tag = DT_STRTAB
   .quad  6,  SYMBOL_TABLE_OFFSET              //d_tag = DT_SYMTAB
@@ -123,14 +122,7 @@ SYMBOL_TABLE:
   .quad  0x0000000000000000
   .quad  0x0000000000000000
 
-  .long  DLOPEN_NAME                          //
-  .byte  0x12                                 //STB_GLOBAL and STT_FUNC
-  .byte  0x00                                 //
-  .word  0x0000                               //
-  .quad  0x0000000000000000                   //
-  .quad  0x0000000000000000                   //
-        
-  .long  DLSYM_NAME                           //
+  .long  PRINTF_NAME                          //
   .byte  0x12                                 //STB_GLOBAL and STT_FUNC
   .byte  0x00                                 //
   .word  0x0000                               //
@@ -142,12 +134,8 @@ SYMBOL_TABLE:
 
 RELOCATIONS_TABLE:
 
-  .quad  DLOPEN_RELOCATION 
+  .quad  PRINTF_RELOCATION 
   .quad  0x0000000100000001
-  .quad  0x0000000000000000
-        
-  .quad  DLSYM_RELOCATION 
-  .quad  0x0000000200000001
   .quad  0x0000000000000000
 
   .set   RELOCATIONS_TABLE_SIZE, . - RELOCATIONS_TABLE        
@@ -155,18 +143,10 @@ RELOCATIONS_TABLE:
         
 STRING_TABLE:
 
-  .set     LIBDL_NAME,   . - STRING_TABLE 
-  .string  "libdl.so.2"
-  .set     DLOPEN_NAME,  . - STRING_TABLE
-  .string  "dlopen"
-  .set     DLSYM_NAME,   . - STRING_TABLE
-  .string  "dlsym" 
-
-  .set     LIBC_NAME,    . - STRING_TABLE     
+  .set     LIBC_NAME,   . - STRING_TABLE 
   .string  "libc.so.6"
   .set     PRINTF_NAME,  . - STRING_TABLE
   .string  "printf"
-  .set     STRING_TABLE_SIZE, . - STRING_TABLE
         
   .set     STRING_TABLE_SIZE, . - STRING_TABLE
   .set     INTERPRETER_SECTION_OFFSET, . - ELF_HEADER
@@ -179,33 +159,16 @@ INTERPRETER_SECTION:
      
 _start:
 
-  xor   %rax, %rax
-  movq  $RTLD_LAZY, %rsi
-  movq  $BASE + LIBRARY_NAME_OFFSET, %rdi           
-  movq  DLOPEN_RELOCATION(%rax), %rbx
-  call  *%rbx
+  mov       $BASE + MESSAGE_OFFSET, %rdi
 
-  movq  %rax, %rdi
-  xor   %rax, %rax
-  
-  movq  $BASE + FUNCTION_NAME_OFFSET, %rsi   
-  movq  DLSYM_RELOCATION(%rax), %rbx
-  call  *%rbx
-
-  movq  $BASE + MESSAGE_OFFSET, %rdi
-  call *%rax
+  xor       %rax,%rax
+  movq       PRINTF_RELOCATION(%rax),%rbx
+  call      *%rbx              
 
   movq       $60, %rax   
   movq       $0,  %rdi   
   syscall
-
-  .set LIBRARY_NAME_OFFSET, . - ELF_HEADER
-  .string "libc.so.6"
-
-  .set FUNCTION_NAME_OFFSET, . - ELF_HEADER
-  .string "printf"
       
-  .set FILE_SIZE, . - ELF_HEADER   
-  .set DLOPEN_RELOCATION, . - ELF_HEADER + BASE
-  .set DLSYM_RELOCATION, . - ELF_HEADER + BASE + 8
-  .set MEMORY_SIZE, . - ELF_HEADER + 512
+  .set       FILE_SIZE,   . - ELF_HEADER   
+  .set       PRINTF_RELOCATION, . - ELF_HEADER + BASE
+  .set       MEMORY_SIZE, . - ELF_HEADER + 64
